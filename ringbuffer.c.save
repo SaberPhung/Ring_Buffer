@@ -1,0 +1,47 @@
+#include <gtest/gtest.h>
+#include "ringbuffer.h"
+
+void init_buffer(struct buffer_type *b, unsigned char *buffer)
+{
+	b->head=buffer;
+	b->tail=buffer;
+	b->buffer=buffer;
+}
+error_type empty_buffer(struct buffer_type *b)
+{
+	b->tail=b->head;
+	return OK;
+}
+int get_buffer_state(struct buffer_type *b,error_type *err)
+{
+	int state;
+	if(!b|| !b->head || !b->tail || !b->buffer){
+                return -1;
+        }
+        else if((b->tail==b->head+1)||(b->head == (b->tail+MAX_BUFFER-1))){
+		return BUFFER_FULL;
+	}
+	else if(b->head == b->tail){
+		return EMPTY_BUFFER;
+	}
+	else{
+		state=b->head-b->tail;
+        }
+	return state;
+}
+int add_char_to_buffer(struct buffer_type *b,unsigned char c, error_type *err)
+{
+	if(get_buffer_state(&b,&err)==BUFFER_FULL):return -1;
+	c= *b->head;
+//	b->buffer[b->head]= c;if(get_buffer_state(&b,&err)==BUFFER_FULL):return -1;
+	b->head=b->head+1;
+	return b->head-(b->buffer);
+}
+char get_char_from_buffer(struct buffer_type *b, error_type *err)
+{
+	char c;
+	c = *b->tail;
+//	b->buffer[b->tail]=c;
+	b->tail=(b->tail+1);
+	return c;
+}

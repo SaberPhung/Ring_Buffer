@@ -1,0 +1,186 @@
+#include <gtest/gtest.h>
+#include "ringbuffer.h"
+
+TEST (initcategory,test)
+{
+       unsigned char rx_buffer[MAX_BUFFER];
+       struct buffer_type r;
+       init_buffer(&r, rx_buffer);
+       EXPECT_EQ(r.head,rx_buffer);
+       EXPECT_EQ(r.tail,rx_buffer);
+       EXPECT_EQ(r.buffer,rx_buffer);
+}
+TEST (bufferState,test)
+{
+	unsigned char rx_buffer[MAX_BUFFER];
+	struct buffer_type r;
+	int state;
+	error_type err;
+	r.buffer=rx_buffer;
+	r.head=rx_buffer+10;
+	r.tail=rx_buffer+4;
+	state=get_buffer_state(&r, &err);
+	EXPECT_EQ(state,6);
+	EXPECT_EQ(err,OK);
+	EXPECT_EQ(r.head, rx_buffer+10);
+	EXPECT_EQ(r.tail, rx_buffer+4);
+	EXPECT_EQ(r.buffer, rx_buffer);
+}
+TEST (addCharToBuffer,test1)
+{
+	unsigned char rx_buffer[MAX_BUFFER];
+	struct buffer_type r;
+	error_type err;
+	int state;
+	r.buffer=rx_buffer;
+	unsigned char c = 12;
+	add_char_to_buffer(&r,c,&err);
+collect2: error: ld returned 1 exit status
+	state=get_buffer_state(&r,&err);
+	EXPECT_EQ(state,1);
+	EXPECT_EQ(err,OK);
+	EXPECT_EQ(r.head,rx_buffer+1);
+	EXPECT_EQ(r.tail,rx_buffer);
+}
+TEST (addCharToBuffer,test2)
+{
+	unsigned char rx_buffer[5];
+	struct buffer_type r;
+	error_type err;
+	int state;
+	unsigned char c= 19;
+	r.buffer=rx_buffer;
+	r.head=rx_buffer+4;
+	add_char_to_buffer(&r,c,&err);
+	state=get_buffer_state(&r,&err);
+	EXPECT_EQ(state,4);
+	EXPECT_EQ(err,BUFFER_FULL);
+	EXPECT_EQ(r.head,rx_buffer+4);
+}
+TEST (addCharToBuffer,test3)
+{
+	unsigned char rx_buffer[5];
+	struct buffer_type r;
+	error_type err;
+	int state;
+	unsigned char c=25;
+	r.buffer=rx_buffer;
+	r.head=rx_buffer;
+	r.tail=rx_buffer+1;
+	add_char_to_buffer(&r,c,&err);
+	state=get_buffer_state(&r,&err);
+	EXPECT_EQ(state,6);
+	EXPECT_EQ(err,BUFFER_FULL);
+	EXPECT_EQ(r.tail,rx_buffer+1);
+	EXPECT_EQ(r.head,rx_buffer);
+}
+TEST (getCharToBuffer,test1)
+{
+	unsigned char rx_buffer[5];
+	struct buffer_type r;
+	error_type err;
+	int state;
+	r.buffer=rx_buffer;
+	r.head=rx_buffer+1;
+	unsigned char c=37;
+	add_char_to_buffer(&r,c,&err);
+	state=get_buffer_state(&r,&err);
+	unsigned char d= get_char_from_buffer(&r,&err);
+	EXPECT_EQ(state,1);
+	EXPECT_EQ(err,OK);
+	EXPECT_EQ(d,c);
+	EXPECT_EQ(r.tail,rx_buffer+1);
+	EXPECT_EQ(r.head,rx_buffer+2);
+}
+TEST (getCharToBuffer,test2)
+{
+	unsigned char rx_buffer[5];
+	struct buffer_type r;
+	error_type err;
+	int state;
+	unsigned char c=17;
+	r.buffer=rx_buffer;
+	r.head=rx_buffer+3;
+	r.tail=rx_buffer+3;
+	add_char_to_buffer(&r,c,&err);
+	state=get_buffer_state(&r,&err);
+	char d=get_char_from_buffer(&r,&err);
+	EXPECT_EQ(state,1);
+	EXPECT_EQ(err,EMPTY_BUFFER);
+	EXPECT_EQ(d,c);
+	EXPECT_EQ(r.head,rx_buffer+4);
+	EXPECT_EQ(r.tail,rx_buffer+4);
+}
+/*TEST (printBuffer,test)
+{
+	unsigned char rx_buffer[5];
+	struct buffer_type r;
+	error_type err;
+	int state;
+	unsigned char c=1;
+	unsigned char d=2;
+	unsigned char e=3;
+	r.buffer=rx_buffer;
+	r.head=rx_buffer;
+	r.tail=rx_buffer;
+	add_char_to_buffer(&r,c,&err);
+	add_char_to_buffer(&r,d,&err);
+	add_char_to_buffer(&r,e,&err);
+	state=get_buffer_state(&r,&err);
+	int n=print_buffer(r,&err);
+	int m=3;
+	EXPECT_EQ(state,3);
+	EXPECT_EQ(err,OK);
+	EXPECT_EQ(m,n);
+	EXPECT_EQ(r.head,rx_buffer+3);
+	EXPECT_EQ(r.tail,rx_buffer);
+}
+/*TEST (addStringToBuffer,test1)
+{
+	unsigned char rx_buffer[10];
+	struct buffer_type r;
+	error_type err;
+	int state;
+	r.buffer=rx_buffer;
+	unsigned char str[]="giao";
+	add_string_to_buffer(&r,&str,&err);
+	state=get_buffer_state(&r,&err);
+	EXPECT_EQ(state,4);
+	EXPECT_EQ(err,OK);
+	EXPECT_EQ(r.head,rx_buffer+4);
+	EXPECT_EQ(r.tail,rx_buffer+3);
+}
+TEST (addStringToBuffer,test2)
+{
+	unsigned char rx_buffer[10];
+	struct buffer_type r;
+	error_type err;
+	int state;
+	char str[]="giao12345678";
+	r.buffer=rx_buffer;
+	add_string_to_buffer(&r,&str,&err);
+	r.tail=rx_buffer;
+	state=get_buffer_state(&r,&err);
+	EXPECT_EQ(state,10);
+	EXPECT_EQ(err,BUFFER_FULL);
+	EXPECT_EQ(r.head,rx_buffer+10);
+	EXPECT_EQ(r.tail,rx_buffer);
+}
+TEST (getStringToBuffer,test1)
+{
+	unsigned char rx_buffer[10];
+	struct buffer_type r;
+	error_type err;
+	int state;
+	r.buffer=rx_buffer;
+	char str[]="giao123";
+	int len=add_string_to_buffer(&r,&str,&err);
+	state=get_buffer_state(&r,&err);
+	unsigned char dest[10];
+	get_string_to_buffer(&r,&dest,len,&err);
+	EXPECT_EQ(state,7);
+	EXPECT_EQ(err,OK);
+	EXPECT_EQ(r.head,rx_buffer+7);
+	EXPECT_EQ(r.tail,rx_buffer+6);
+}
+*/
